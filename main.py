@@ -2,6 +2,7 @@ import jinja2
 import os
 import webapp2
 from google.appengine.api import users
+from google.appengine.api import mail
 
 env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
 
@@ -13,15 +14,19 @@ class MainHandler(webapp2.RequestHandler):#this handles the default url and rend
 class AccountHandler(webapp2.RequestHandler):
     def get(self):
         template = env.get_template('account.html')
-        self.response.write(template.render())
         user = users.get_current_user()
         if user:
-            greeting = ('Welcome, %s! (<a href="%s">sign out</a>)' %
-                        (user.nickname(), users.create_logout_url('/')))
+            url = users.create_logout_url("/")
+            url_linktext = 'Logout'
         else:
-            greeting= self.redirect(users.create_login_url(self.request.uri))
+            url = self.redirect(users.create_login_url(self.request.uri))
+            url_linktext = 'Login'
 
-        self.response.out.write('<html><body>%s</body></html>' % greeting)
+        template_values = {
+            'url': url,
+            'url_linktext': url_linktext,
+        }
+        self.response.write(template.render(template_values))
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
